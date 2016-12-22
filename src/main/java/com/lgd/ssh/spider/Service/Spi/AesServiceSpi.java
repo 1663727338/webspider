@@ -13,7 +13,7 @@ import com.lgd.ssh.spider.Service.AesService;
 
 public class AesServiceSpi implements AesService {
 
-	private Logger logger = Logger.getLogger(AesServiceSpi.class);
+	private Logger logger = Logger.getLogger(AesServiceSpi.class);//.getLogger(AesServiceSpi.class);
 
 	private String aesKey = "0123456789abcdef";
 
