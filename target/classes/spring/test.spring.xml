@@ -12,4 +12,7 @@
 		<property name="aesService" ref="aesService"></property>
 	</bean>
 
+	<bean id="RedisDaoTest" class="com.lgd.ssh.spider.Test.RedisDaoTest">
+		<property name="redisDao" ref="redisDao"></property>
+	</bean>
 </beans>
