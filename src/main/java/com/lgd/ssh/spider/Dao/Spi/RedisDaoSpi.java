@@ -4,75 +4,118 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 import com.lgd.ssh.spider.Dao.RedisDao;
 
-import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
+import redis.clients.jedis.Response;
 
 public class RedisDaoSpi extends RedisBaseDao implements RedisDao {
 
-	private Jedis getJedisClient() {
-		return super.getJedis();
-	}
+	private Logger logger = Logger.getLogger(RedisDaoSpi.class);
 
-	private Pipeline getPipeline() {
-		Jedis jedis = getJedisClient();
-		return jedis.pipelined();
-	}
+	public void add(final Map<String, String> addMap) {
 
-	public void add(Map<String, String> addMap) {
-
-		Pipeline pipeline = getPipeline();
-
-		pipeline.multi();
-		for (Map.Entry<String, String> entry : addMap.entrySet()) {
-			pipeline.setnx(entry.getKey(), entry.getKey());
+		if (logger.isDebugEnabled()) {
+			logger.debug("start RedisDaoSpi.add");
 		}
-		pipeline.exec();
-		pipeline.syncAndReturnAll();
+		RedisExecute(new RedisExecute<Void>() {
+
+			public Void Execute(Pipeline pipeline) {
+				pipeline.multi();
+				for (Map.Entry<String, String> entry : addMap.entrySet()) {
+					pipeline.setnx(entry.getKey(), entry.getValue());
+				}
+				pipeline.exec();
+				pipeline.syncAndReturnAll();
+				return null;
+			}
+
+		});
+		if (logger.isDebugEnabled()) {
+			logger.debug("end RedisDaoSpi.add");
+		}
 	}
 
-	public void delete(List<String> deleteList) {
-		Pipeline pipeline = getPipeline();
+	public void delete(final List<String> deleteList) {
 
-		pipeline.multi();
-		for (String key : deleteList) {
-			pipeline.del(key);
+		if (logger.isDebugEnabled()) {
+			logger.debug("start RedisDaoSpi.delete");
 		}
+		RedisExecute(new RedisExecute<Void>() {
 
-		pipeline.exec();
-		pipeline.syncAndReturnAll();
+			public Void Execute(Pipeline pipeline) {
+				pipeline.multi();
+				for (String key : deleteList) {
+					pipeline.del(key);
+				}
+
+				pipeline.exec();
+				pipeline.syncAndReturnAll();
+				return null;
+			}
+
+		});
+		if (logger.isDebugEnabled()) {
+			logger.debug("end RedisDaoSpi.delete");
+		}
 	}
 
-	public void update(Map<String, String> updateMap) {
-		Pipeline pipeline = getPipeline();
+	public void update(final Map<String, String> updateMap) {
 
-		pipeline.multi();
-		for (Map.Entry<String, String> entry : updateMap.entrySet()) {
-			pipeline.set(entry.getKey(), entry.getKey());
+		if (logger.isDebugEnabled()) {
+			logger.debug("start RedisDaoSpi.update");
 		}
+		RedisExecute(new RedisExecute<Void>() {
 
-		pipeline.exec();
-		pipeline.syncAndReturnAll();
+			public Void Execute(Pipeline pipeline) {
+				pipeline.multi();
+				for (Map.Entry<String, String> entry : updateMap.entrySet()) {
+					pipeline.set(entry.getKey(), entry.getValue());
+				}
 
+				pipeline.exec();
+				pipeline.syncAndReturnAll();
+				return null;
+			}
+
+		});
+		if (logger.isDebugEnabled()) {
+			logger.debug("end RedisDaoSpi.update");
+		}
 	}
 
-	public Map<String, String> query(List<String> queryList) {
-		Pipeline pipeline = getPipeline();
+	public Map<String, String> query(final List<String> queryList) {
 
-		pipeline.multi();
-
-		for (String key : queryList) {
-			pipeline.get(key);
+		if (logger.isDebugEnabled()) {
+			logger.debug("start RedisDaoSpi.query");
 		}
-		pipeline.exec();
+		Map<String, String> getMap = RedisExecute(new RedisExecute<Map<String, String>>() {
 
-		List<Object> getAll = pipeline.syncAndReturnAll();
+			public Map<String, String> Execute(Pipeline pipeline) {
 
-		Map<String, String> getMap = new HashMap<String, String>();
-		for (Object obj : getAll) {
-			String[] param = ( obj.toString()).split(":");
-			getMap.put(param[0], obj.toString());
+				Map<String, Response<String>> getMap = new HashMap<String, Response<String>>();
+				pipeline.multi();
+
+				for (String key : queryList) {
+					getMap.put(key, pipeline.get(key));
+				}
+				pipeline.exec();
+
+				pipeline.syncAndReturnAll();
+
+				Map<String, String> resultMap = new HashMap<String, String>();
+				for (Map.Entry<String, Response<String>> entry : getMap.entrySet()) {
+					resultMap.put(entry.getKey(), entry.getValue().get());
+				}
+				return resultMap;
+			}
+
+		});
+
+		if (logger.isDebugEnabled()) {
+			logger.debug("end RedisDaoSpi.query");
 		}
 		return getMap;
 	}
