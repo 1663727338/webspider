@@ -4,6 +4,11 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.Pipeline;
 
+/**
+ * redis基类
+ * @author lgd
+ *
+ */
 public class RedisBaseDao {
 
 	private static JedisPool jedisPool;
